@@ -10,7 +10,8 @@ fn main(
   polynomial: [Field; CANDIDATES + 1],
   polynomial_commitment: pub Field, // made commitment public, to avoid submitting invalid proofs by modifying the polynomial, this parameter will be checked in the smart contract
   nullifier: pub [u8; 32],
-  recipient_address: Field // added recipient address as a public variable to avoid front-running issue, this parameter is also used in the smart contract when sending the airdrop
+  recipient_address_priv: Field,
+  recipient_address: pub Field // added recipient address as a public variable to avoid front-running issue, this parameter is also used in the smart contract when sending the airdrop
 ) {
   // Recover the signer's address from signature, hashed message and public key.
   let key = ecrecover::secp256k1::PubKey::from_unified(pub_key);
@@ -29,7 +30,7 @@ fn main(
   assert(polynomial_hash==polynomial_commitment);
 
   // To avoid front-running issue we must add a constraint on the recipient address
-  assert(recipient_address == recipient_address); // technically this line is not required because Noir for newer versions of Noir, contrarily to Circom, will always add one constraint for each input, even if unused. However, this line has no impact on complexity of the compiled circuit and improves readability while also muting some warnings about unused variable during compilation, so I decided to keep it
+  assert(recipient_address == recipient_address_priv); // technically this line is no longer required in newer versions of Noir (but still required in Noir 0.7.1), contrarily to Circom, will always add one constraint for each input, even if unused. However, this line has no impact on complexity of the compiled circuit and improves readability while also muting some warnings about unused variable during compilation, so I decided to keep it
 }
 
 fn evaluate_polynomial(polynomial: [Field; CANDIDATES + 1], x: Field) -> Field {
@@ -59,6 +60,6 @@ fn test_main() {
   let polynomial_commitment = 0x1eceef64088bbbeb280bee01b3f4e611137e8d0ac5a868f538e4617df5c62ec2;
   let nullifier = [142,  197,  227,  35,  35,  142,  255,  176,  38,  63,  247,  168,  33,  178,  55,  202,  46,  76,  167,  202,  130,  208,  59,  14,  151,  19,  144,  228,  58,  37,  10,  101];
   let recipient_address = 0x4f5F14AF7E1999fa09dD0CEa786B82B4Fc4B9910;
-  main(pub_key, signature, hashed_message, polynomial, polynomial_commitment, nullifier,recipient_address);
+  main(pub_key, signature, hashed_message, polynomial, polynomial_commitment, nullifier,recipient_address,recipient_address);
 }
 
